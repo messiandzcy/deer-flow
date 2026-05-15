@@ -36,7 +36,7 @@ def _search_text(
         logger.error("ddgs library not installed. Run: pip install ddgs")
         return []
 
-    ddgs = DDGS(timeout=30)
+    ddgs = DDGS(timeout=8)
 
     try:
         results = ddgs.text(
