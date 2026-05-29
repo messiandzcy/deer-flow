@@ -64,7 +64,14 @@ class TitleMiddleware(AgentMiddleware[TitleMiddlewareState]):
 
     @staticmethod
     def _is_user_message_for_title(message: object) -> bool:
-        return getattr(message, "type", None) == "human" and not is_dynamic_context_reminder(message)
+        if getattr(message, "type", None) != "human":
+            return False
+        if is_dynamic_context_reminder(message):
+            return False
+        # Filter out injected/internal messages (e.g. LanguageDetectMiddleware reminder)
+        if getattr(message, "additional_kwargs", {}).get("hide_from_ui"):
+            return False
+        return True
 
     def _should_generate_title(self, state: TitleMiddlewareState) -> bool:
         """Check if we should generate a title for this thread."""

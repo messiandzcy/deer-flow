@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from collections import defaultdict
 from typing import Any, override
 
@@ -13,6 +14,19 @@ from langchain_core.messages import AIMessage
 from langgraph.runtime import Runtime
 
 logger = logging.getLogger(__name__)
+
+# Matches bare `citation:xxx` text that the LLM sometimes outputs as plain
+# text instead of the proper markdown link format `[citation:Title](URL)`.
+_BARE_CITATION_RE = re.compile(r"(?<!\S)citation:[^\s,.;:!?)\]'\"》）]+")
+
+
+def strip_bare_citations(text: str) -> str:
+    """Remove bare ``citation:xxx`` text that LLMs sometimes emit as plain text."""
+    result = _BARE_CITATION_RE.sub("", text)
+    result = re.sub(r" +", " ", result)  # collapse multiple spaces
+    result = re.sub(r"\s+([,.;:!?)\]'\"》）])", r"\1", result)  # space before punctuation
+    return result.strip()
+
 
 TOKEN_USAGE_ATTRIBUTION_KEY = "token_usage_attribution"
 
@@ -264,6 +278,13 @@ class TokenUsageMiddleware(AgentMiddleware):
         last = messages[-1]
         if not isinstance(last, AIMessage):
             return None
+
+        # Clean bare `citation:xxx` plain text that LLMs sometimes emit
+        # instead of proper `[citation:Title](URL)` markdown links.
+        if isinstance(last.content, str) and "citation:" in last.content:
+            cleaned = strip_bare_citations(last.content)
+            if cleaned != last.content:
+                last = last.model_copy(update={"content": cleaned})
 
         usage = getattr(last, "usage_metadata", None)
         if usage:
