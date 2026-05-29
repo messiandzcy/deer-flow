@@ -533,6 +533,7 @@ combined with a FastAPI gateway for REST API access [citation:FastAPI](https://f
 **CRITICAL RULES:**
 - ❌ DO NOT write research content without citations
 - ❌ DO NOT forget to extract URLs from search results
+- ❌ NEVER write bare `citation:xxx` as plain text — `citation:` is ONLY valid inside the markdown link format `[citation:Title](URL)`
 - ✅ ALWAYS add `[citation:Title](URL)` after claims from external sources
 - ✅ ALWAYS include a "Sources" section listing all references
 </citations>
